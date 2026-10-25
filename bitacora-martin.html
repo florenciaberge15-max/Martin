@@ -1,0 +1,545 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f5c63">
+<title>Bitácora de Martín</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: una sola columna tipo libreta de obra. Lista de trabajos -> ficha con dictado -> informe. */
+:root{
+  --bg:#edf1f0;
+  --surface:#ffffff;
+  --ink:#14262b;
+  --muted:#5b6f73;
+  --line:#d3dcdb;
+  --teal:#0f5c63;
+  --teal-ink:#ffffff;
+  --rec:#e8590c;
+  --rec-ink:#ffffff;
+  --ok:#2b8a3e;
+  --font-display:'Barlow Condensed','Arial Narrow',Arial,sans-serif;
+  --font-body:'Barlow',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0e1a1d;
+    --surface:#16282c;
+    --ink:#e6eeee;
+    --muted:#93a8ab;
+    --line:#2a4146;
+    --teal:#4fb3bb;
+    --teal-ink:#08191c;
+    --rec:#ff7a33;
+    --rec-ink:#1a0a00;
+    --ok:#69db7c;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:var(--bg);color:var(--ink);
+  font-family:var(--font-body);font-size:17px;line-height:1.45;
+  padding-block:max(12px,env(safe-area-inset-top,0px)) max(24px,env(safe-area-inset-bottom,0px));
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+}
+.wrap{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+[hidden]{display:none!important}
+h1,h2{font-family:var(--font-display);font-weight:700;letter-spacing:.02em;text-transform:uppercase;margin:0;text-wrap:balance}
+h1{font-size:30px}
+h2{font-size:22px}
+header.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:4px}
+.sub{color:var(--muted);font-size:15px;margin:0}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  min-height:48px;padding:0 18px;border-radius:10px;border:1.5px solid var(--line);
+  background:var(--surface);font-weight:600;
+}
+.btn.primary{background:var(--teal);border-color:var(--teal);color:var(--teal-ink)}
+.btn.danger{color:var(--rec);border-color:var(--rec)}
+.btn.small{min-height:40px;padding:0 12px;font-size:15px}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--teal);padding:0 8px}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row>*{flex:1 1 140px;min-width:0}
+
+/* Lista */
+.job{
+  background:var(--surface);border:1px solid var(--line);border-radius:12px;
+  padding:14px 16px;display:flex;flex-direction:column;gap:2px;text-align:left;width:100%;
+}
+.job b{font-family:var(--font-display);font-size:21px;letter-spacing:.02em;text-transform:uppercase}
+.job span{color:var(--muted);font-size:15px;min-width:0;overflow-wrap:anywhere}
+.job .fecha{font-variant-numeric:tabular-nums}
+.empty{
+  border:2px dashed var(--line);border-radius:12px;padding:28px 18px;text-align:center;color:var(--muted);
+}
+
+/* Ficha */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:14px}
+label{display:flex;flex-direction:column;gap:6px;font-size:14px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;min-width:0}
+input,textarea{
+  background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:12px;
+  font-size:17px;color:var(--ink);text-transform:none;letter-spacing:0;font-weight:400;width:100%;min-width:0;
+}
+textarea{min-height:200px;resize:vertical;line-height:1.5}
+textarea.short{min-height:84px}
+
+/* Botón de grabar */
+.dictado{display:flex;flex-direction:column;align-items:center;gap:10px;padding:6px 0 2px}
+.rec{
+  width:92px;height:92px;border-radius:50%;border:0;background:var(--rec);color:var(--rec-ink);
+  display:grid;place-items:center;box-shadow:0 0 0 6px color-mix(in srgb,var(--rec) 25%,transparent);
+}
+.rec svg{width:40px;height:40px}
+.rec.on{animation:pulso 1.4s ease-in-out infinite}
+@keyframes pulso{
+  0%,100%{box-shadow:0 0 0 6px color-mix(in srgb,var(--rec) 25%,transparent)}
+  50%{box-shadow:0 0 0 16px color-mix(in srgb,var(--rec) 10%,transparent)}
+}
+@media (prefers-reduced-motion:reduce){.rec.on{animation:none}}
+.estado{font-weight:600;min-height:1.4em;text-align:center}
+.interim{color:var(--muted);font-style:italic;min-height:1.4em;text-align:center;overflow-wrap:anywhere}
+.aviso{
+  background:color-mix(in srgb,var(--rec) 12%,var(--surface));border:1px solid var(--rec);
+  border-radius:10px;padding:10px 12px;font-size:15px
+}
+.tip{font-size:14px;color:var(--muted);text-align:center;margin:0}
+.guardado{color:var(--ok);font-size:14px;font-weight:600;min-height:1.2em}
+
+/* Informe */
+.informe{
+  background:#ffffff;color:#14262b;border:1px solid var(--line);border-radius:6px;padding:22px 20px;
+  display:flex;flex-direction:column;gap:14px;
+}
+.informe h2{color:#0f5c63;font-size:26px;border-bottom:3px solid #0f5c63;padding-bottom:6px}
+.informe dl{margin:0;display:grid;grid-template-columns:max-content 1fr;gap:6px 14px}
+.informe dt{font-weight:600;color:#5b6f73}
+.informe dd{margin:0;overflow-wrap:anywhere}
+.informe h3{font-family:var(--font-display);text-transform:uppercase;letter-spacing:.04em;font-size:18px;margin:6px 0 0;color:#0f5c63}
+.informe p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.informe .firma{margin-top:18px;padding-top:6px;border-top:1px solid #9fb0b3;width:200px;font-size:14px;color:#5b6f73}
+
+@media print{
+  body{background:#fff;padding:0}
+  .no-print{display:none!important}
+  .informe{border:0;padding:0}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- LISTA -->
+  <section id="vista-lista" class="wrap" style="gap:16px">
+    <header class="top">
+      <div>
+        <h1>Bitácora</h1>
+        <p class="sub">Trabajos de mantenimiento del hogar</p>
+      </div>
+    </header>
+    <button class="btn primary" id="nuevo" type="button">+ Nuevo trabajo</button>
+    <div id="lista" style="display:flex;flex-direction:column;gap:10px"></div>
+  </section>
+
+  <!-- FICHA -->
+  <section id="vista-ficha" class="wrap no-print" hidden>
+    <header class="top">
+      <button class="btn small ghost" id="volver" type="button">← Trabajos</button>
+      <span class="guardado" id="guardado" aria-live="polite"></span>
+    </header>
+
+    <div class="card">
+      <h2>Datos del trabajo</h2>
+      <div class="row">
+        <label for="f-cliente">Cliente<input id="f-cliente" autocomplete="off" placeholder="Ej: Familia Gómez"></label>
+        <label for="f-fecha">Fecha<input id="f-fecha" type="date"></label>
+      </div>
+      <label for="f-direccion">Dirección<input id="f-direccion" autocomplete="off" placeholder="Ej: Av. Rivadavia 4520, 3° B"></label>
+      <label for="f-tipo">Tipo de trabajo<input id="f-tipo" autocomplete="off" placeholder="Ej: Cambio de canilla y pérdida en cocina"></label>
+    </div>
+
+    <div class="card">
+      <h2>Descripción</h2>
+      <div class="dictado">
+        <button class="rec" id="rec" type="button" aria-label="Grabar dictado" aria-pressed="false">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 15a4 4 0 0 0 4-4V6a4 4 0 0 0-8 0v5a4 4 0 0 0 4 4Zm6-4a6 6 0 0 1-12 0H4a8 8 0 0 0 7 7.94V22h2v-3.06A8 8 0 0 0 20 11h-2Z"/></svg>
+        </button>
+        <div class="estado" id="estado" aria-live="polite">Tocá y contá qué hiciste</div>
+        <div class="interim" id="interim" aria-hidden="true"></div>
+      </div>
+      <div class="aviso" id="aviso" hidden></div>
+      <label for="f-texto">Lo que se transcribe aparece acá. Podés corregirlo.
+        <textarea id="f-texto" placeholder="El texto dictado se va sumando acá..."></textarea>
+      </label>
+      <p class="tip">Para puntuar, hacé una pausa y decí “punto”, “coma” o “punto y aparte”.</p>
+    </div>
+
+    <div class="card">
+      <h2>Materiales y tiempo</h2>
+      <label for="f-materiales">Materiales usados
+        <textarea id="f-materiales" class="short" placeholder="Ej: 1 canilla monocomando, cinta teflón, 2 flexibles de 40 cm"></textarea>
+      </label>
+      <label for="f-horas">Horas trabajadas
+        <input id="f-horas" inputmode="decimal" autocomplete="off" placeholder="Ej: 2,5">
+      </label>
+    </div>
+
+    <div class="row">
+      <button class="btn primary" id="ver-informe" type="button">Armar informe</button>
+      <button class="btn danger" id="borrar" type="button">Borrar trabajo</button>
+    </div>
+  </section>
+
+  <!-- INFORME -->
+  <section id="vista-informe" class="wrap" hidden>
+    <header class="top no-print">
+      <button class="btn small ghost" id="volver-ficha" type="button">← Editar</button>
+      <span class="guardado" id="copiado" aria-live="polite"></span>
+    </header>
+    <article class="informe" id="informe"></article>
+    <div class="row no-print">
+      <button class="btn primary" id="copiar" type="button">Copiar texto</button>
+      <button class="btn" id="whatsapp" type="button">Enviar por WhatsApp</button>
+      <button class="btn" id="descargar" type="button">Descargar .txt</button>
+      <button class="btn" id="imprimir" type="button">Imprimir / PDF</button>
+    </div>
+  </section>
+
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var KEY = 'bitacora_martin_v1';
+  var $ = function(s){ return document.querySelector(s); };
+
+  /* ---------- almacenamiento ---------- */
+  function leer(){
+    try { return JSON.parse(localStorage.getItem(KEY) || '[]'); } catch(e){ return []; }
+  }
+  function escribir(v){
+    try { localStorage.setItem(KEY, JSON.stringify(v)); return true; } catch(e){ return false; }
+  }
+  var trabajos = leer();
+  var actual = null; // id del trabajo abierto
+
+  function hoy(){
+    var d = new Date();
+    var m = String(d.getMonth()+1).padStart(2,'0');
+    var dd = String(d.getDate()).padStart(2,'0');
+    return d.getFullYear()+'-'+m+'-'+dd;
+  }
+  function fechaLarga(iso){
+    if(!iso) return '';
+    var p = iso.split('-');
+    return p[2]+'/'+p[1]+'/'+p[0];
+  }
+  function buscar(id){ return trabajos.filter(function(t){ return t.id===id; })[0]; }
+
+  /* ---------- vistas ---------- */
+  function mostrar(nombre){
+    ['lista','ficha','informe'].forEach(function(n){
+      $('#vista-'+n).hidden = (n!==nombre);
+    });
+    window.scrollTo(0,0);
+  }
+
+  function pintarLista(){
+    var cont = $('#lista');
+    cont.textContent = '';
+    if(!trabajos.length){
+      var e = document.createElement('div');
+      e.className = 'empty';
+      e.textContent = 'Todavía no cargaste ningún trabajo. Tocá “Nuevo trabajo”, grabá lo que hiciste y se escribe solo.';
+      cont.appendChild(e);
+      return;
+    }
+    trabajos.slice().sort(function(a,b){ return (b.fecha||'').localeCompare(a.fecha||'') || b.creado-a.creado; })
+    .forEach(function(t){
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'job';
+      var n = document.createElement('b'); n.textContent = t.cliente || 'Sin cliente';
+      var tipo = document.createElement('span'); tipo.textContent = t.tipo || 'Sin descripción corta';
+      var f = document.createElement('span'); f.className = 'fecha'; f.textContent = fechaLarga(t.fecha) + (t.direccion ? ' · ' + t.direccion : '');
+      b.appendChild(n); b.appendChild(tipo); b.appendChild(f);
+      b.addEventListener('click', function(){ abrir(t.id); });
+      cont.appendChild(b);
+    });
+  }
+
+  function abrir(id){
+    detener();
+    var t = buscar(id); if(!t) return;
+    actual = id;
+    $('#f-cliente').value = t.cliente||'';
+    $('#f-fecha').value = t.fecha||hoy();
+    $('#f-direccion').value = t.direccion||'';
+    $('#f-tipo').value = t.tipo||'';
+    $('#f-texto').value = t.texto||'';
+    $('#f-materiales').value = t.materiales||'';
+    $('#f-horas').value = t.horas||'';
+    $('#guardado').textContent = '';
+    resetBorrar();
+    mostrar('ficha');
+  }
+
+  $('#nuevo').addEventListener('click', function(){
+    var t = { id:'t'+Date.now(), creado:Date.now(), fecha:hoy(), cliente:'', direccion:'', tipo:'', texto:'', materiales:'', horas:'' };
+    trabajos.push(t); escribir(trabajos);
+    abrir(t.id);
+  });
+
+  $('#volver').addEventListener('click', function(){
+    detener(); guardarAhora(); pintarLista(); mostrar('lista');
+  });
+
+  /* ---------- autoguardado ---------- */
+  var timer = null;
+  function guardarAhora(){
+    var t = buscar(actual); if(!t) return;
+    t.cliente = $('#f-cliente').value.trim();
+    t.fecha = $('#f-fecha').value;
+    t.direccion = $('#f-direccion').value.trim();
+    t.tipo = $('#f-tipo').value.trim();
+    t.texto = $('#f-texto').value;
+    t.materiales = $('#f-materiales').value;
+    t.horas = $('#f-horas').value.trim();
+    var ok = escribir(trabajos);
+    $('#guardado').textContent = ok ? 'Guardado' : 'No se pudo guardar';
+  }
+  function programarGuardado(){
+    $('#guardado').textContent = '';
+    clearTimeout(timer);
+    timer = setTimeout(guardarAhora, 500);
+  }
+  ['#f-cliente','#f-fecha','#f-direccion','#f-tipo','#f-texto','#f-materiales','#f-horas'].forEach(function(s){
+    $(s).addEventListener('input', programarGuardado);
+  });
+
+  /* ---------- borrar (dos toques) ---------- */
+  var borrarArmado = false, borrarTimer = null;
+  function resetBorrar(){ borrarArmado=false; clearTimeout(borrarTimer); $('#borrar').textContent='Borrar trabajo'; }
+  $('#borrar').addEventListener('click', function(){
+    if(!borrarArmado){
+      borrarArmado = true;
+      $('#borrar').textContent = 'Tocá de nuevo para borrar';
+      borrarTimer = setTimeout(resetBorrar, 4000);
+      return;
+    }
+    trabajos = trabajos.filter(function(t){ return t.id!==actual; });
+    escribir(trabajos); actual = null; resetBorrar();
+    pintarLista(); mostrar('lista');
+  });
+
+  /* ---------- dictado por voz ---------- */
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var rec = null, grabando = false;
+
+  function aviso(msg){
+    var a = $('#aviso');
+    if(!msg){ a.hidden = true; a.textContent=''; return; }
+    a.textContent = msg; a.hidden = false;
+  }
+
+  function mayuscula(s){ return s.replace(/^\s*([a-záéíóúñü])/i, function(m){ return m.toUpperCase(); }); }
+
+  function procesar(seg){
+    var t = seg.trim();
+    var cierre = '';
+    if(/\s+punto y aparte$/i.test(t)){ t = t.replace(/\s+punto y aparte$/i,''); cierre = '.\n'; }
+    else if(/\s+punto$/i.test(t)){ t = t.replace(/\s+punto$/i,''); cierre = '.'; }
+    else if(/\s+coma$/i.test(t)){ t = t.replace(/\s+coma$/i,''); cierre = ','; }
+    else if(/^punto y aparte$/i.test(t)){ t=''; cierre='.\n'; }
+    else if(/^punto$/i.test(t)){ t=''; cierre='.'; }
+    else if(/^coma$/i.test(t)){ t=''; cierre=','; }
+    return { texto:t, cierre:cierre };
+  }
+
+  function agregar(seg){
+    var area = $('#f-texto');
+    var r = procesar(seg);
+    var v = area.value;
+    var piece = r.texto;
+    if(piece){
+      var empiezaOracion = !v.trim() || /[.\n]\s*$/.test(v);
+      if(empiezaOracion) piece = mayuscula(piece);
+      if(v && !/[\s]$/.test(v)) v += ' ';
+      v += piece;
+    }
+    if(r.cierre){
+      v = v.replace(/[ ]+$/,'') + r.cierre;
+      if(r.cierre==='.' || r.cierre===',') v += ' ';
+    }
+    area.value = v;
+    area.scrollTop = area.scrollHeight;
+    programarGuardado();
+  }
+
+  function pintarBoton(){
+    var b = $('#rec');
+    b.classList.toggle('on', grabando);
+    b.setAttribute('aria-pressed', grabando ? 'true' : 'false');
+    b.setAttribute('aria-label', grabando ? 'Detener dictado' : 'Grabar dictado');
+    $('#estado').textContent = grabando ? 'Escuchando... tocá para parar' : 'Tocá y contá qué hiciste';
+    if(!grabando) $('#interim').textContent = '';
+  }
+
+  function iniciar(){
+    if(!SR){
+      aviso('Este navegador no tiene dictado integrado. Abrí la app en Chrome, o tocá el cuadro de texto y usá el botón del micrófono del teclado del celular.');
+      return;
+    }
+    aviso('');
+    rec = new SR();
+    rec.lang = 'es-AR';
+    rec.continuous = true;
+    rec.interimResults = true;
+    rec.onresult = function(e){
+      var interim = '';
+      for(var i=e.resultIndex; i<e.results.length; i++){
+        var r = e.results[i];
+        if(r.isFinal) agregar(r[0].transcript);
+        else interim += r[0].transcript;
+      }
+      $('#interim').textContent = interim;
+    };
+    rec.onerror = function(e){
+      if(e.error==='not-allowed' || e.error==='service-not-allowed'){
+        grabando = false; pintarBoton();
+        aviso('No hay permiso para usar el micrófono. Habilitalo en los ajustes del navegador para este sitio y probá de nuevo. La página tiene que abrirse con https.');
+      } else if(e.error==='audio-capture'){
+        grabando = false; pintarBoton();
+        aviso('No se encontró un micrófono disponible.');
+      } else if(e.error==='network'){
+        aviso('Sin conexión: el dictado necesita internet.');
+      }
+    };
+    rec.onend = function(){
+      if(grabando){ try{ rec.start(); }catch(_){ grabando=false; pintarBoton(); } }
+      else pintarBoton();
+    };
+    try{
+      rec.start(); grabando = true; pintarBoton();
+    }catch(_){
+      grabando = false; pintarBoton();
+    }
+  }
+
+  function detener(){
+    if(!grabando && !rec) return;
+    grabando = false;
+    try{ rec && rec.stop(); }catch(_){}
+    pintarBoton();
+  }
+
+  $('#rec').addEventListener('click', function(){
+    if(grabando) detener(); else iniciar();
+  });
+
+  /* ---------- informe ---------- */
+  function datosInforme(){
+    var t = buscar(actual) || {};
+    return {
+      fecha: fechaLarga(t.fecha),
+      cliente: t.cliente || '—',
+      direccion: t.direccion || '—',
+      tipo: t.tipo || '—',
+      texto: (t.texto || '').trim() || 'Sin descripción cargada.',
+      materiales: (t.materiales || '').trim(),
+      horas: (t.horas || '').trim()
+    };
+  }
+
+  function textoPlano(){
+    var d = datosInforme();
+    var l = [];
+    l.push('INFORME DE TRABAJO');
+    l.push('');
+    l.push('Fecha: ' + d.fecha);
+    l.push('Cliente: ' + d.cliente);
+    l.push('Dirección: ' + d.direccion);
+    l.push('Trabajo: ' + d.tipo);
+    l.push('');
+    l.push('Descripción:');
+    l.push(d.texto);
+    if(d.materiales){ l.push(''); l.push('Materiales:'); l.push(d.materiales); }
+    if(d.horas){ l.push(''); l.push('Horas trabajadas: ' + d.horas); }
+    return l.join('\n');
+  }
+
+  function pintarInforme(){
+    var d = datosInforme();
+    var cont = $('#informe');
+    cont.textContent = '';
+    function el(tag, txt, cls){ var e = document.createElement(tag); if(txt!==undefined) e.textContent = txt; if(cls) e.className = cls; return e; }
+    cont.appendChild(el('h2','Informe de trabajo'));
+    var dl = el('dl');
+    [['Fecha',d.fecha],['Cliente',d.cliente],['Dirección',d.direccion],['Trabajo',d.tipo]].forEach(function(p){
+      dl.appendChild(el('dt',p[0])); dl.appendChild(el('dd',p[1]));
+    });
+    cont.appendChild(dl);
+    cont.appendChild(el('h3','Descripción'));
+    cont.appendChild(el('p',d.texto));
+    if(d.materiales){ cont.appendChild(el('h3','Materiales')); cont.appendChild(el('p',d.materiales)); }
+    if(d.horas){ cont.appendChild(el('h3','Horas trabajadas')); cont.appendChild(el('p',d.horas)); }
+    cont.appendChild(el('div','Martín','firma'));
+  }
+
+  $('#ver-informe').addEventListener('click', function(){
+    detener(); guardarAhora(); pintarInforme(); $('#copiado').textContent=''; mostrar('informe');
+  });
+  $('#volver-ficha').addEventListener('click', function(){ mostrar('ficha'); });
+
+  function avisoInforme(m){
+    $('#copiado').textContent = m;
+    setTimeout(function(){ $('#copiado').textContent=''; }, 2500);
+  }
+
+  $('#copiar').addEventListener('click', function(){
+    var txt = textoPlano();
+    function respaldo(){
+      var ta = document.createElement('textarea');
+      ta.value = txt; ta.style.position='fixed'; ta.style.opacity='0';
+      document.body.appendChild(ta); ta.select();
+      var ok = false;
+      try{ ok = document.execCommand('copy'); }catch(_){}
+      document.body.removeChild(ta);
+      avisoInforme(ok ? 'Copiado' : 'No se pudo copiar');
+    }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(txt).then(function(){ avisoInforme('Copiado'); }, respaldo);
+    } else respaldo();
+  });
+
+  $('#whatsapp').addEventListener('click', function(){
+    window.open('https://wa.me/?text=' + encodeURIComponent(textoPlano()), '_blank', 'noopener');
+  });
+
+  $('#descargar').addEventListener('click', function(){
+    var d = datosInforme();
+    var nombre = ('informe-' + (d.cliente==='—' ? 'trabajo' : d.cliente) + '-' + (d.fecha||'').replace(/\//g,'-'))
+      .toLowerCase().replace(/[^a-z0-9áéíóúñ-]+/g,'-').replace(/-+/g,'-') + '.txt';
+    var blob = new Blob([textoPlano()], {type:'text/plain;charset=utf-8'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = nombre;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+  });
+
+  $('#imprimir').addEventListener('click', function(){ window.print(); });
+
+  /* ---------- inicio ---------- */
+  pintarLista();
+  mostrar('lista');
+})();
+</script>
+</body>
+</html>
